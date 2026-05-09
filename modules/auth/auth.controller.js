@@ -1,8 +1,12 @@
-const { registerUser } = require("./auth.service");
+const { registerUser, loginUser } = require("./auth.service");
 
-exports.login = async (req, res) => {
-    console.log("Login ROUTE TRIGGERD");
-    res.send("HEHE")
+exports.login = async (req, res,next) => {
+    try{
+        const result = await loginUser(req.body);
+        return res.status(201).json(result);
+    }catch(error){
+        next(error)
+    }
 }
 exports.register = async (req, res , next) => {
     try {

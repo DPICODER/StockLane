@@ -17,10 +17,9 @@ const authModel = sequelize.define('auth',{
         type:DataTypes.STRING,
         allowNull:false,
     },
-    role:{
-        type:DataTypes.ENUM,
-        values:('SUPER_ADMIN','TENANT_ADMIN','STAFF'),
-        defaultValue:"STAFF"
+    role: {
+        type: DataTypes.ENUM('SUPER_ADMIN', 'TENANT_ADMIN', 'STAFF'),
+        defaultValue: 'STAFF'
     },
     tenant_id:{
         type:DataTypes.UUID,
