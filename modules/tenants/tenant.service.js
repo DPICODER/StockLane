@@ -1,4 +1,4 @@
-const { generateSlug } = require("../../core/utils/generateSlug");
+const { generateSlug } = require("../../core/utils/generate-Tenant-Slug");
 const tenant = require("./tenant.model");
 exports.createTenant = (company, plan, options = {}) => {
     return tenant.create({

@@ -4,13 +4,14 @@ const sequelize = require('./core/db/database');
 const app = express();
 const port = process.env.APP_PORT || 3000;
 const auth = require('./modules/auth/auth.routes');
+const invite = require('./modules/invite/invite.routes');
 const errorMiddleware = require('./core/middleware/error.middleware');
 const NotFoundError = require('./core/utils/errors.js/NotFoundError');
 
 
 app.use(express.json());
 app.use("/api/v1/auth",auth);
-
+app.use("/api/v1/invite",invite);
 
 app.get('/', (req, res) => {
     res.send("Server is up")

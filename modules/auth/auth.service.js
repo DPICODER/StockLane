@@ -1,6 +1,6 @@
 const sequelize = require("../../core/db/database");
 const ValidationError = require("../../core/utils/errors.js/ValidationError");
-const generateToken = require("../../core/utils/generateToken");
+const generateToken = require("../../core/utils/generate-Jwt-Token");
 const { createTenant, checkTenantExists } = require("../tenants/tenant.service");
 const { createUser, getUser, getUserByUserName, getUserByAuthId } = require("../user/user.service");
 const authModel = require("./auth.model")
@@ -45,6 +45,7 @@ exports.loginUser = async({email,password})=>{
     const tokenUser = {
         auth_id : authData.id,
         tenant_id : authData.tenant_id,
+        user_id: userData.id,
         role : authData.role
     };
     //  DEBUG

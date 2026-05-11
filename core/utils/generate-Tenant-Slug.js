@@ -1,3 +1,9 @@
+/**
+ * Generates a slug for the given string
+ * 
+ * @param {String} name - removes unnecessary keywords and normalizes the string 
+ * @returns {String} -> example EA Games -> ea-games
+ */
 exports .generateSlug = (name) => {
     return name
         .toLowerCase()
