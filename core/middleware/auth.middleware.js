@@ -1,16 +1,14 @@
 const jwt = require('jsonwebtoken');
+const AuthError = require('../utils/errors/AuthError');
 
 const authMiddleware = (req,res,next)=>{
 
     try {
         // 1. Get Authorization Header 
         const authHeader = req.headers.authorization;
-
         // 2. Check if header exist 
         if(!authHeader){
-            return res.status(401).json({
-                message:"No token provided"
-            })
+            return next(new AuthError("No token provided"))
         }
         
         // 3. Extract token

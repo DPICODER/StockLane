@@ -1,6 +1,6 @@
-const ValidationError = require("../../core/utils/errors.js/ValidationError");
+const ValidationError = require("../../core/utils/errors/ValidationError");
 const { generateInviteToken } = require("../../core/utils/generate-Invite-Token");
-const { getInviteExpiration, getExpiryStatus } = require("../../core/utils/invite-expiry");
+const { getExpiryStatus, getInviteExpirationDate } = require("../../core/utils/invite-expiry");
 const invite = require("./invite.model");
 
 /**
@@ -11,21 +11,22 @@ const invite = require("./invite.model");
  * @param {number} expiryDuration - Number of days until the invite expires.
  * @param {Object} sessionUser - The user object of the person sending the invite.
  * @param {string} sessionUser.tenant_id - The ID of the organization/firm.
- * @param {string} sessionUser.user_id - The ID of the sender.
+ * @param {string} sessionUser.auth_id - The ID of the sender.
  * @returns {Promise<Object>} The created database record.
  */
-exports.createInvite =  (email, role, expiryDuration,sessionUser) => {
-    const checkInviteExists = exports.getPendingInvites(email);
-    if(!checkInviteExists){
+exports.createInvite =  async (email, role, expiryDuration,sessionUser) => {
+    const canCreateInvite = await exports.canCreateInvite(email,sessionUser);
+    if(!canCreateInvite){
         throw new ValidationError({invite:"Invitaion already pending for this user"})
     }
-    return invite.create({
+
+    return await invite.create({
         email, // Shorthand for email: email
         role,  // Shorthand for role: role
         tenant_id: sessionUser.tenant_id,
         token: generateInviteToken(),
         status: "pending",
-        expires_at: getInviteExpiration(expiryDuration),
+        expires_at: getInviteExpirationDate(expiryDuration),
         invited_by: sessionUser.auth_id
     });
 };
@@ -34,19 +35,22 @@ exports.createInvite =  (email, role, expiryDuration,sessionUser) => {
  * Checks for and pending invites for the given user
  * 
  * @param {String} email - checks for any pending invite instance with same email
- * @returns {Promise<Object>} If a matching instance found or null
+ * @param {Object} sessionUser - session user data
+ * @returns {Boolean} if invite exists && expired return true else false
  */
-exports.getPendingInvites = async (email)=>{
-    const existingInvite = await exports.getRecentInvite(email);
-    console.log("existing Invite",existingInvite);
+exports.canCreateInvite = async (email,sessionUser)=>{
+    
+    const existingInvite = await exports.getRecentInvite(email,sessionUser);
     if(!existingInvite){
-        throw new ValidationError({invite:"No invitaion found"})
+        return true
     }
+    
     const checkExpirationStatus = getExpiryStatus(existingInvite.expires_at);
-    if(!checkExpirationStatus){
-        throw new ValidationError({invite:"Invitaion for this user still acitve"})
+    if(checkExpirationStatus){
+        return true
     }
-    return existingInvite;
+
+    return false; // cannot create invite 
 }
 
 /**
@@ -55,13 +59,10 @@ exports.getPendingInvites = async (email)=>{
  * @param {String} email email address of user to check invites
  * @returns {Promise<Object>} entry of the latest invite
  */
-exports.getRecentInvite = async (email) =>{
+exports.getRecentInvite = async (email,sessionUser) =>{
     return await invite.findOne({
         where:{
-            email
-        },order:[['createdAt','ASC']]
+            email,tenant_id:sessionUser.tenant_id,status:"pending"
+        },order:[['createdAt','DESC']]
     })
 }
-
-// TODO:re-send a new invite and figure out the entry is created on db and the error is also pooping up
-// TODO: better luck

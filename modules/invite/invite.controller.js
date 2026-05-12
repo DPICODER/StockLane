@@ -1,4 +1,3 @@
-const authMiddleware = require("../../core/middleware/auth.middleware");
 const { createInvite } = require("./invite.service");
 
 exports.Invite = async (req, res, next) => {

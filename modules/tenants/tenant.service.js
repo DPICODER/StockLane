@@ -1,15 +1,13 @@
 const { generateSlug } = require("../../core/utils/generate-Tenant-Slug");
 const tenant = require("./tenant.model");
+
 exports.createTenant = (company, plan, options = {}) => {
+    const normalizedPaln = plan || "free";
     return tenant.create({
         slug : generateSlug(company),
         name: company,
-        plan: plan || "free",
-        status: plan == "free" ? "trial" : "active"
+        plan: normalizedPaln,
+        status: normalizedPaln == "free" ? "trial" : "active"
     }, options);
 }
 
-
-exports.checkTenantExists = (email) =>{
-    return tenant.findOne({where:email})
-}

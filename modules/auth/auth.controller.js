@@ -3,7 +3,7 @@ const { registerUser, loginUser } = require("./auth.service");
 exports.login = async (req, res,next) => {
     try{
         const result = await loginUser(req.body);
-        return res.status(201).json(result);
+        return res.status(200).json(result);
     }catch(error){
         next(error)
     }

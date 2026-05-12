@@ -1,4 +1,4 @@
-const ValidationError = require("../utils/errors.js/ValidationError");
+const ValidationError = require("../utils/errors/ValidationError");
 
 const validate = (schema) => {
   return (req, res, next) => {

@@ -10,7 +10,6 @@ const invite = sequelize.define("invite", {
     email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true,
     },
     tenant_id: {
         type: DataTypes.UUID,

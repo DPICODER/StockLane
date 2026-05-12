@@ -6,7 +6,7 @@ const port = process.env.APP_PORT || 3000;
 const auth = require('./modules/auth/auth.routes');
 const invite = require('./modules/invite/invite.routes');
 const errorMiddleware = require('./core/middleware/error.middleware');
-const NotFoundError = require('./core/utils/errors.js/NotFoundError');
+const NotFoundError = require('./core/utils/errors/NotFoundError');
 
 
 app.use(express.json());

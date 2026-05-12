@@ -4,7 +4,7 @@
  * @param {number} expiryWindow - The number of days from now until the invite expires
  * @returns {date} A Date object representing the expiration timestamp
  */
-exports.getInviteExpiration = (expiryWindow) => {
+exports.getInviteExpirationDate = (expiryWindow) => {
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + expiryWindow);
     return expirationDate;
