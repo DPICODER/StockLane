@@ -15,11 +15,21 @@ exports.hashPassword = (password) => {
     return bcrypt.hash(password, 10);
 };
 
-exports.createAuthAccount = (email, password, tenant_id, options = {}) => {
+/**
+ * Creates a authentication account for the new user
+ * 
+ * @param {String} email - user email
+ * @param {String} password -hashed password
+ * @param {UUID} tenant_id - tenant id
+ * @param {String} role - role of the user
+ * @param {any} options - like tarnsaction's
+ * @returns {Promise<Object>} 
+ */
+exports.createAuthAccount = (email, password, tenant_id,role, options = {}) => {
     return authModel.create({
         email,
         password_hash: password,
-        role: "TENANT_ADMIN",
+        role: role,
         tenant_id,
         last_login: null
     }, options);
@@ -76,7 +86,7 @@ exports.registerUser = async ({ email, password, company, plan, name, phone, ava
 
         const password_hash = await exports.hashPassword(password);
         const tenant = await createTenant(company, plan, { transaction: t });
-        const authAccount = await exports.createAuthAccount(email, password_hash, tenant.id, { transaction: t })
+        const authAccount = await exports.createAuthAccount(email, password_hash, tenant.id,"TENANT_ADMIN", { transaction: t })
         const user = await createUser(name, phone, avatar, tenant.id, authAccount.id, { transaction: t });
 
         return {

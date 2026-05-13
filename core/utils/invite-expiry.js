@@ -1,5 +1,5 @@
 /**
- * Calculates the expiration date for an invitaion
+ * Calculates the expiration date for an Invitation
  * 
  * @param {number} expiryWindow - The number of days from now until the invite expires
  * @returns {date} A Date object representing the expiration timestamp
