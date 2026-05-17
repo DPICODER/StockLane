@@ -1,12 +1,18 @@
-export function requireAccess(allowedRoles){
-    return (req,res,next) => {
+const rolePermissions =
+   require("../utils/rolePermissions");
+
+
+const requirePermission = (allowedPermissions)=>{
+    return (req,res,next)=>{
         if(!req.user){
             return res.status(401).json({
                 "success":false,
                 "message":'Authenticate to access'
             })
         }
-        if(!allowedRoles.includes(req.user.role)){
+        
+        const roleAccess = rolePermissions[req.user.role];
+        if(!roleAccess.includes(allowedPermissions)){
             return res.status(403).json({
                 "success":false,
                 "message":"Forbidden"
@@ -15,3 +21,5 @@ export function requireAccess(allowedRoles){
         next();
     }
 }
+
+module.exports = requirePermission;
