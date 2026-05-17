@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const tenant = require('../../modules/tenants/tenant.model');
 
 const generateToken = (tokenData)=>{
     return jwt.sign(

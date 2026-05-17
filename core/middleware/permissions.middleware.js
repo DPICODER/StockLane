@@ -10,8 +10,14 @@ const requirePermission = (allowedPermissions)=>{
                 "message":'Authenticate to access'
             })
         }
-        
+
         const roleAccess = rolePermissions[req.user.role];
+        if(!roleAccess){
+            return res.status(403).json({
+                "success":false,
+                "message":'Forbidden'
+            })
+        }
         if(!roleAccess.includes(allowedPermissions)){
             return res.status(403).json({
                 "success":false,

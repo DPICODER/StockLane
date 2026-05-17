@@ -48,11 +48,11 @@ exports.updateAuthLastLogin = (auth_id) => {
 exports.loginUser = async ({ email, password }) => {
     const authData = await exports.findAuthByEmail(email);
     if (!authData) {
-        throw new ValidationError({ auth: "Invaild Credientials Check again" })
+        throw new ValidationError({ auth: "Invalid Credentials Check again" })
     }
     const comparePasswords = await bcrypt.compare(password, authData.password_hash);
     if (!comparePasswords) {
-        throw new ValidationError({ auth: "Invaild Credientials Check again" })
+        throw new ValidationError({ auth: "Invalid Credentials Check again" })
     }
     const userData = await getUserByAuthId(authData.id);
 
@@ -91,7 +91,7 @@ exports.registerUser = async ({ email, password, company, plan, name, phone, ava
 
         return {
             success: true,
-            message: `Tenant ${tenant.name} registered sucessfully`,
+            message: `Tenant ${tenant.name} registered successfully`,
             data: {
                 user: user.name,
                 user_id: user.id,
