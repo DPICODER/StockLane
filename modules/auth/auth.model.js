@@ -28,8 +28,12 @@ const authModel = sequelize.define('auth',{
     last_login:{
         type:DataTypes.DATE,
         allowNull:true,
+    },
+    status: {
+        type: DataTypes.ENUM('active', 'inactive', 'suspended'),
+        defaultValue: 'active',
+        allowNull: false
     }
-
 },
 {
     timestamps:true,

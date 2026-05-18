@@ -11,21 +11,44 @@ const user = require("./user.model");
  * @param {any} options like transactions
  * @returns {Promise<object>}
  */
-exports.createUser = (name,phone,avatar,tenant_id,auth_id,options={})=>{
+exports.createUser = (name, phone, avatar, tenant_id, auth_id, options = {}) => {
     return user.create({
-        name,phone,avatar:avatar||"",tenant_id,auth_id
-    },options)
+        name, phone, avatar: avatar || "", tenant_id, auth_id
+    }, options)
 }
 
 
-exports.getUser = (tenant_id) =>{
-    return user.findOne({where:{
-        tenant_id:tenant_id
+exports.getUser = (tenant_id) => {
+    return user.findOne({
+        where: {
+            tenant_id
+        }
+    })
+}
+
+exports.getUserByAuthId = (auth_id) => {
+    return user.findOne({
+        where: {
+            auth_id
+        }, attributes: ["id", "name", "avatar"], raw: true
+    })
+}
+
+exports.getAllTenantUsers = (tenant_id) => {
+    return user.findAll({
+        where: {
+            tenant_id
+        }
+    })
+}
+
+exports.userInfoUpdate = (info,id) =>{
+    return user.update(info,{where:{
+        id
     }})
 }
-
-exports.getUserByAuthId = (auth_id) =>{
-    return user.findOne({where:{
-        auth_id
-    },attributes:["id","name","avatar"],raw:true})
-}
+//Needs soft delete 
+// exports.deactivateMember = (id)=>{
+//     // TODO: needs to delete info at auth / user table
+//     return user.destroy({where:{id}})
+// } 

@@ -5,6 +5,8 @@ const app = express();
 const port = process.env.APP_PORT || 3000;
 const auth = require('./modules/auth/auth.routes');
 const invite = require('./modules/invite/invite.routes');
+const tenant = require('./modules/tenants/tenant.routes');
+const user = require('./modules/user/user.routes');
 const errorMiddleware = require('./core/middleware/error.middleware');
 const NotFoundError = require('./core/utils/errors/NotFoundError');
 
@@ -12,6 +14,8 @@ const NotFoundError = require('./core/utils/errors/NotFoundError');
 app.use(express.json());
 app.use("/api/v1/auth",auth);
 app.use("/api/v1/invite",invite);
+app.use("/api/v1/tenant",tenant);
+app.use('/api/v1/user',user)
 
 app.get('/', (req, res) => {
     res.send("Server is up")
@@ -30,9 +34,6 @@ async function startServer() {
 
     await sequelize.authenticate();
     console.log("DB authenticated");
-
-    await sequelize.sync();
-    console.log("DB synced");
 
     app.listen(port, () => {
       console.log(`Server running at http://localhost:${port}`);
