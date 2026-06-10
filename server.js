@@ -10,6 +10,12 @@ const user = require('./modules/user/user.routes');
 const errorMiddleware = require('./core/middleware/error.middleware');
 const NotFoundError = require('./core/utils/errors/NotFoundError');
 
+app.use((req, res, next) => {
+  const time = new Date().toLocaleTimeString();
+  console.log(`[${time}] : ${req.method} -> ${req.path}`);
+  next();
+});
+
 
 app.use(express.json());
 app.use("/api/v1/auth",auth);

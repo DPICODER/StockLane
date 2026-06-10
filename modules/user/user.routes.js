@@ -1,5 +1,5 @@
 const express = require('express');
-const { listAllTenantUsers, updateUserInfoById, deleteUserById } = require('./user.controller');
+const { listAllTenantUsers, updateUserInfoById, deactivateUser } = require('./user.controller');
 const authMiddleware = require('../../core/middleware/auth.middleware');
 const requirePermission = require('../../core/middleware/permissions.middleware');
 const Permissions = require('../../core/utils/permissions');
@@ -10,6 +10,6 @@ router.get('/',requirePermission(Permissions.MEMBER_VIEW),listAllTenantUsers);
 
 router.patch('/:id',requirePermission(Permissions.MEMBER_UPDATE),updateUserInfoById);
 
-router.delete('/:id',requirePermission(Permissions.MEMBER_DEACTIVATE),deleteUserById);
+router.delete('/:id',requirePermission(Permissions.MEMBER_DEACTIVATE),deactivateUser);
 
 module.exports = router;

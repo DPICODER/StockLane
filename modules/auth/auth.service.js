@@ -1,8 +1,9 @@
 const sequelize = require("../../core/db/database");
+const AuthError = require("../../core/utils/errors/AuthError");
 const ValidationError = require("../../core/utils/errors/ValidationError");
 const generateToken = require("../../core/utils/generate-Jwt-Token");
 const { createTenant } = require("../tenants/tenant.service");
-const { createUser, getUser, getUserByUserName, getUserByAuthId } = require("../user/user.service");
+const { createUser, getUserByUserName, getUserByAuthId } = require("../user/user.service");
 const authModel = require("./auth.model")
 const bcrypt = require('bcrypt');
 
@@ -50,12 +51,17 @@ exports.loginUser = async ({ email, password }) => {
     if (!authData) {
         throw new ValidationError({ auth: "Invalid Credentials Check again" })
     }
+    if (authData.status === "inactive"){
+        throw new AuthError("User is Inactive Contact Administration")
+    }
     const comparePasswords = await bcrypt.compare(password, authData.password_hash);
     if (!comparePasswords) {
         throw new ValidationError({ auth: "Invalid Credentials Check again" })
     }
     const userData = await getUserByAuthId(authData.id);
-
+    if(!userData){
+        throw new Error("User Not found")
+    }
     // console.log("authDAata : ",authData);
 
 
