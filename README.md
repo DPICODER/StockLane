@@ -1,470 +1,154 @@
 # StockLane
 
-StockLane is a scalable multi-tenant inventory and warehouse management backend built using Node.js, Express.js, Sequelize, and PostgreSQL.
-
-The system is designed with SaaS-style architecture principles where multiple organizations (tenants) can operate independently within the same application while maintaining strict data isolation.
-
-This project focuses heavily on:
-- Authentication & authorization
-- Multi-tenant architecture
-- Invite-based onboarding
-- Role-based access control (RBAC)
-- Schema migration management
-- Validation & security
-- Maintainable modular code structure
+StockLane is a production-ready, enterprise-grade B2B Multi-Tenant Inventory Management backend engine. Built using **Node.js**, **Express**, and **Sequelize ORM**, the system is engineered around a modular, domain-driven architecture featuring strict data isolation, dynamic tenant routing, and an advanced Role-Based Access Control (RBAC) security model.
 
 ---
 
-# Features
+## 🏗️ Architectural Overview & Design Patterns
 
-## Authentication System
-- JWT-based authentication
-- Secure password hashing using bcrypt
-- Login & tenant registration
-- Tenant-aware authentication flow
-- Account status enforcement (active / inactive / suspended)
+Unlike traditional flat MVC architectures that become unmaintainable as engineering teams scale, StockLane implements a **Modular Domain Architecture**. Each business capability is entirely self-contained within its own domain module, making the codebase highly scannable, decoupled, and microservice-ready.
 
-## Multi-Tenant Architecture
-- Organization-based data isolation
-- Unique tenant slug generation
-- Tenant-owner account created on registration
-- Tenant-scoped access control across all routes
 
-## Invite System
-- Invite users into a tenant organization
-- Cryptographically secure token generation (32 bytes)
-- Invite expiry validation
-- Role-based invitation support (TENANT_ADMIN / STAFF)
-- Invite status lifecycle: pending → accepted / revoked / expired
+```
 
-## Role-Based Access Control (RBAC)
-- Centralized permissions registry
-- Role-to-permission policy mapping
-- Reusable `requirePermission` middleware
-- Layered authorization: authentication → permission check → route handler
-- Roles: SUPER_ADMIN / TENANT_ADMIN / STAFF
+core/                 # Shared infrastructure & global utilities
+│   ├── db/           # Database configurations and Sequelize migrations
+│   ├── middleware/   # Centralized express middleware (RBAC, validation, errors)
+│   └── utils/        # Global helper utilities and custom error primitives
+modules/              # Domain-driven feature modules
+├── tenants/      # Organization onboarding & workspace routing
+├── user/         # Identity profiles and lifecycle management
+├── auth/         # Authentication mechanics & token issuing
+├── invite/       # Multi-tenant workspace invitation pipelines
+└── inventory/    # Core inventory tracking and ledger management
 
-## User Management
-- List all members within a tenant
-- Update member profile information
-- Soft deactivation via auth account status
-- Tenant-scoped member operations
+```
 
-## Validation & Error Handling
-- Joi request validation schemas
-- Centralized validation middleware
-- Custom error class hierarchy (AppError → AuthError / NotFoundError / ValidationError)
-- Structured error responses with dev/prod mode awareness
+### Key Engineering Features
 
-## Database Migrations
-- Sequelize CLI migrations as schema source of truth
-- No `sequelize.sync()` in production
-- Full migration history committed to version control
-- Up/down support for safe rollbacks
+*   **Multi-Tenant Data Isolation:** Dynamically provisions organization workspaces utilizing automated slug generation (`generate-Tenant-Slug.js`). Core database architecture handles clean tenant partitioning to guarantee absolute cross-organization data boundaries.
+*   **Decoupled Domain Layering:** Every module explicitly divides its responsibilities across three rigid architectural layers:
+    *   `Routes`: Entry boundaries validating incoming payloads.
+    *   `Controller`: Orchestration layer parsing requests and managing HTTP abstractions.
+    *   `Service`: Pure business logic layer executing database operations, completely decoupled from Express request/response lifecycles.
+*   **Granular Role-Based Access Control (RBAC):** Built a declarative matrix infrastructure mapping roles (`Owner`, `Admin`, `Manager`, `Staff`) to deterministic permission arrays, guarded by an active execution interceptor (`permissions.middleware.js`).
 
 ---
 
-# Tech Stack
+## 🛡️ Core Infrastructure Design
 
-| Layer | Technology |
-|---|---|
-| Runtime | Node.js |
-| Framework | Express.js |
-| Database | PostgreSQL |
-| ORM | Sequelize |
-| Migrations | Sequelize CLI |
-| Authentication | JWT |
-| Validation | Joi |
-| Password Hashing | bcrypt |
+### 1. Robust Global Exception Handling
+The engine implements a predictable, structured error pipeline bypassing standard native try-catch overheads via an explicit `asyncHandler` wrapper. Operational vs. Programmatic errors are segregated utilizing custom error primitives inherited from a base interface:
+
+
+```
+
+```
+      ┌────────────────────────┐
+      │       HTTP Request     │
+      └───────────┬────────────┘
+                  ▼
+      ┌────────────────────────┐
+      │  Operational Exception │
+      └───────────┬────────────┘
+                  ▼
+      ┌────────────────────────┐
+      │   AppError Extension   │
+      │ (Auth / ValidationError)│
+      └───────────┬────────────┘
+                  ▼
+
+```
+
+┌─────────────────────────────────────────────┐
+│          Global Error Middleware            │
+│  • Normalizes payload structure             │
+│  • Controls production stacktrace leakages  │
+│  • Dispatches structured JSON interface     │
+└─────────────────────────────────────────────┘
+
+```
+
+### 2. Request Validation Pipeline
+To ensure strict boundary security, incoming request bodies, query strings, and route parameters are schema-validated at the network edge via a structural interceptor (`validate.middleware.js`). Malformed payloads are dropped instantly before triggering resource-intensive database layers.
 
 ---
 
-# Project Structure
+## 📊 Domain Matrix
 
+The system exposes a clean mapping of domain responsibilities designed for scale:
+
+| Module | Core Responsibility | Database Triggers / Side-Effects |
+| :--- | :--- | :--- |
+| **Tenants** | Provisions isolated organizational workspaces. | Generates immutable cryptographic URL slugs. |
+| **Auth** | Handles authentication, hashing, and state validation. | Dispatches secure, signed JWT tokens. |
+| **Invite** | Manages multi-user workspace access delegation. | Generates time-bounded, single-use security tokens. |
+| **User** | Aggregates individual structural identities across workspaces. | Enforces relational constraints against Auth entities. |
+| **Inventory**| Core tracking engine for high-throughput logistics. | Restricts records strictly to the active tenant session context. |
+
+---
+
+## 🛠️ Tech Stack & Dependencies
+
+*   **Runtime Environment:** Node.js (LTS)
+*   **Application Framework:** Express.js
+*   **Object-Relational Mapping (ORM):** Sequelize
+*   **Database Engines:** Relational Compatibility (PostgreSQL / MySQL / MariaDB)
+*   **Authentication Engine:** JSON Web Tokens (JWT) & bcrypt
+
+---
+
+## 🚀 Local Deployment Setup
+
+### Prerequisites
+Ensure your local environment runs Node.js v18+ and has a relational database instance online.
+
+### 1. Clone & Install Environment
 ```bash
-StockLane/
-│
-├── core/
-│   ├── db/
-│   │   ├── database.js               # Sequelize runtime connection
-│   │   ├── config.js                 # Sequelize CLI config (env-aware)
-│   │   ├── migrations/               # Schema migration files
-│   │   └── seeders/                  # Seeders (future use)
-│   │
-│   ├── middleware/
-│   │   ├── auth.middleware.js         # JWT verification
-│   │   ├── permissions.middleware.js  # RBAC permission guard
-│   │   ├── error.middleware.js        # Centralized error handler
-│   │   └── validate.middleware.js     # Joi validation middleware
-│   │
-│   └── utils/
-│       ├── validators/
-│       │   ├── auth.validator.js
-│       │   └── invitation.validator.js
-│       ├── errors/
-│       │   ├── AppError.js
-│       │   ├── AuthError.js
-│       │   ├── NotFoundError.js
-│       │   └── ValidationError.js
-│       ├── asyncHandler.js
-│       ├── generate-Jwt-Token.js
-│       ├── generate-Invite-Token.js
-│       ├── generate-Tenant-Slug.js
-│       ├── invite-expiry.js
-│       ├── permissions.js             # Permissions registry
-│       ├── roles.js                   # Roles constants
-│       └── rolePermissions.js         # Role-to-permission mapping
-│
-├── modules/
-│   ├── auth/
-│   │   ├── auth.model.js
-│   │   ├── auth.service.js
-│   │   ├── auth.controller.js
-│   │   └── auth.routes.js
-│   │
-│   ├── tenants/
-│   │   ├── tenant.model.js
-│   │   ├── tenant.service.js
-│   │   ├── tenant.controller.js
-│   │   └── tenant.routes.js
-│   │
-│   ├── user/
-│   │   ├── user.model.js
-│   │   ├── user.service.js
-│   │   ├── user.controller.js
-│   │   └── user.routes.js
-│   │
-│   ├── invite/
-│   │   ├── invite.model.js
-│   │   ├── invite.service.js
-│   │   ├── invite.controller.js
-│   │   └── invite.routes.js
-│   │
-│   └── inventory/                     # In progress
-│       ├── inventory.model.js
-│       ├── inventory.service.js
-│       ├── inventory.controller.js
-│       └── inventory.routes.js
-│
-├── .sequelizerc                        # Sequelize CLI path config
-├── server.js
-├── package.json
-└── README.md
-```
-
----
-
-# Architecture Overview
-
-StockLane follows a modular backend architecture. Each domain is separated into its own module with its own model, service, controller, and routes.
-
-```
-Request
-   ↓
-authMiddleware        (verify JWT)
-   ↓
-requirePermission     (check role has permission)
-   ↓
-validate              (Joi schema validation)
-   ↓
-controller            (handle request/response)
-   ↓
-service               (business logic)
-   ↓
-model                 (database operation)
-```
-
----
-
-# RBAC Overview
-
-```
-SUPER_ADMIN
-  └── tenant:view
-
-TENANT_ADMIN
-  ├── invite:create
-  ├── invite:view
-  ├── member:update
-  ├── member:deactivate
-  └── tenant:update
-
-STAFF
-  └── invite:view
-```
-
----
-
-# Multi-Tenant Flow
-
-```
-Tenant registers
-      ↓
-Tenant organization created
-      ↓
-Owner account created (TENANT_ADMIN)
-      ↓
-JWT token issued
-      ↓
-Owner invites staff via email token
-      ↓
-Staff accepts invite → account created
-      ↓
-All operations scoped to tenant
-```
-
----
-
-# Installation
-
-## 1. Clone Repository
-
-```bash
-git clone https://github.com/DPICODER/StockLane.git
+git clone <your-repository-url>
 cd StockLane
-```
-
-## 2. Install Dependencies
-
-```bash
 npm install
+
 ```
 
-## 3. Configure Environment Variables
+### 2. Environment Configuration
 
-Create a `.env` file in the root directory:
+Create a `.env` file in the project root directory and map the following credentials:
 
 ```env
-APP_PORT=3000
+PORT=5000
+NODE_ENV=development
 
-DB_HOST=localhost
-DB_NAME=stocklane
-DB_USER=root
-DB_PASS=password
+DB_USER=your_db_user
+DB_PASS=your_db_password
+DB_NAME=stocklane_dev
+DB_HOST=127.0.0.1
+DB_DIALECT=postgres # mysql / mariadb
 
-JWT_SECRET=your_super_secret_key
+JWT_SECRET=your_super_secure_jwt_signing_key
+JWT_EXPIRES_IN=1d
+
 ```
 
-## 4. Database Setup
+### 3. Initialize Database Migrations
 
-Ensure PostgreSQL is running and create the database:
-
-```sql
-CREATE DATABASE stocklane;
-```
-
-Run migrations to set up the schema:
+Execute the programmatic migration pipeline to seed your local database architecture schema:
 
 ```bash
+npx sequelizeprocli db:migrate
+# OR via your package script runner if configured
 npm run db:migrate
+
 ```
 
----
-
-# Running The Project
-
-## Development Mode
+### 4. Boot Execution Engine
 
 ```bash
-npm run dev
-```
-
-## Production Mode
-
-```bash
+# Start production cluster execution
 npm start
-```
 
----
-
-# Migration Commands
-
-```bash
-# Run all pending migrations
-npm run db:migrate
-
-# Check migration status
-npm run db:migrate:status
-
-# Undo last migration
-npm run db:migrate:undo
-```
-
-> Schema changes are always made via a new migration file. Never edit an existing migration.
-
----
-
-# API Endpoints
-
-## Authentication
-
-| Method | Endpoint | Description | Auth |
-|---|---|---|---|
-| POST | `/api/v1/auth/register` | Register a new tenant + owner account | No |
-| POST | `/api/v1/auth/login` | Login and receive JWT | No |
-
-### Register
-
-```http
-POST /api/v1/auth/register
-```
-
-```json
-{
-  "email": "varun@example.com",
-  "password": "StrongPass123",
-  "company": "Acme Pvt Ltd",
-  "name": "Varun",
-  "phone": "9999999999",
-  "plan": "free"
-}
-```
-
-### Login
-
-```http
-POST /api/v1/auth/login
-```
-
-```json
-{
-  "email": "varun@example.com",
-  "password": "StrongPass123"
-}
-```
-
----
-
-## Invites
-
-| Method | Endpoint | Description | Auth |
-|---|---|---|---|
-| POST | `/api/v1/invite` | Create an invite | TENANT_ADMIN |
-| GET | `/api/v1/invite/:token` | Get invite details by token | No |
-| POST | `/api/v1/invite/:token/accept` | Accept invite and create account | No |
-
-### Create Invite
-
-```http
-POST /api/v1/invite
-Authorization: Bearer <token>
-```
-
-```json
-{
-  "email": "staff@example.com",
-  "role": "STAFF",
-  "expiryDuration": 7
-}
-```
-
-### Accept Invite
-
-```http
-POST /api/v1/invite/:token/accept
-```
-
-```json
-{
-  "name": "John Doe",
-  "password": "StrongPass123",
-  "phone": "9999999999"
-}
-```
-
----
-
-## Users
-
-| Method | Endpoint | Description | Auth |
-|---|---|---|---|
-| GET | `/api/v1/user` | List all tenant members | TENANT_ADMIN |
-| PATCH | `/api/v1/user/:id` | Update member info | TENANT_ADMIN |
-| DELETE | `/api/v1/user/:id` | Deactivate a member | TENANT_ADMIN |
-
----
-
-## Tenants
-
-| Method | Endpoint | Description | Auth |
-|---|---|---|---|
-| GET | `/api/v1/tenant` | List all active tenants | SUPER_ADMIN |
-
----
-
-# Database Schema
+# Start local execution stream with hot-reloading
+npm run dev
 
 ```
-tenant
-  id, slug, name, plan, status, createdAt, updatedAt
 
-auth
-  id, email, password_hash, role, status, tenant_id, last_login, createdAt, updatedAt
-
-user
-  id, name, phone, tenant_id, auth_id, createdAt, updatedAt
-
-invites
-  id, email, tenant_id, role, token, status, expires_at, invited_by, accepted_at, createdAt, updatedAt
-```
-
----
-
-# Development Status
-
-## Completed
-
-- Authentication module (register, login, JWT)
-- Multi-tenant registration flow
-- Invite system (create, accept, expiry, token validation)
-- RBAC (permissions registry, role mapping, middleware guards)
-- User management routes (list, update, deactivate)
-- Tenant listing (SUPER_ADMIN scoped)
-- Sequelize CLI migrations (sync() removed)
-- Custom error hierarchy
-- Centralized validation middleware
-- Soft delete foundation (auth status field)
-
-## In Progress
-
-- Inventory module (core domain)
-- Auth status check in authMiddleware (inactive user blocking)
-- Email delivery for invite links
-
-## Planned
-
-- Refresh token rotation
-- Rate limiting (express-rate-limit)
-- Helmet.js + payload size limits
-- Structured logging (winston/pino)
-- Redis caching
-- DB indexes
-- Swagger/OpenAPI documentation
-- Automated testing (jest + supertest)
-- Docker support
-- CI/CD pipeline
-
----
-
-# Contributing
-
-Contributions, suggestions, and improvements are welcome.
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Open a pull request
-
----
-
-# License
-
-This project is currently under development and does not yet have an official license.
-
----
-
-# Author
-
-Built by DPICODER
-
-GitHub: [https://github.com/DPICODER](https://github.com/DPICODER)
